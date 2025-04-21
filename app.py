@@ -5,24 +5,34 @@ import base64
 
 st.title("🖼️ Image Converter & Resizer")
 
+# Initialize rotation count in session state
+if "rotation" not in st.session_state:
+    st.session_state.rotation = 0
+
 uploaded_file = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg", "bmp", "gif", "webp"])
 
 output_formats = ["JPEG", "PNG", "WEBP", "BMP", "PDF"]
 default_format = "JPEG"
 
 if uploaded_file:
-    # Load original image
+    # Load image
     image = Image.open(uploaded_file)
-    original_width, original_height = image.width, image.height
+
+    # File info
     uploaded_file.seek(0)
     original_size_kb = round(len(uploaded_file.read()) / 1024, 2)
+    original_width, original_height = image.width, image.height
 
-    st.markdown(f"**Original Image:** {original_width} × {original_height} px — {original_size_kb} KB")
+    # Rotate button
+    if st.button("↻ Rotate 90° clockwise"):
+        st.session_state.rotation = (st.session_state.rotation + 90) % 360
 
-    # Rotation
-    rotate = st.checkbox("↻ Rotate 90° clockwise")
-    if rotate:
-        image = image.rotate(-90, expand=True)
+    # Apply rotation if any
+    if st.session_state.rotation != 0:
+        image = image.rotate(-st.session_state.rotation, expand=True)
+
+    # Show original (possibly rotated) image info
+    st.markdown(f"**Original Image:** {image.width} × {image.height} px — {original_size_kb} KB")
 
     st.markdown("### Resize Mode")
     resize_mode = st.radio("Choose resize mode", ["Scale", "Crop"])
@@ -99,7 +109,6 @@ if uploaded_file:
         file_size_kb = round(len(buf.getvalue()) / 1024, 2)
         result_width, result_height = processed_image.width, processed_image.height
 
-        # Display final image with info
         st.markdown(f"**Converted Image:** {result_width} × {result_height} px — {file_size_kb} KB")
         st.image(processed_image, use_container_width=True)
 
