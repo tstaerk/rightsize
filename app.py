@@ -45,4 +45,43 @@ if uploaded_file:
 
     else:
         st.markdown("#### Crop X pixels from each side")
-        crop_left = st.number_input("Left", value=
+        crop_left = st.number_input("Left", value=0, min_value=0, max_value=image.width - 1)
+        crop_top = st.number_input("Top", value=0, min_value=0, max_value=image.height - 1)
+        crop_right = st.number_input("Right", value=0, min_value=0, max_value=image.width - crop_left - 1)
+        crop_bottom = st.number_input("Bottom", value=0, min_value=0, max_value=image.height - crop_top - 1)
+
+        left = crop_left
+        top = crop_top
+        right = image.width - crop_right
+        bottom = image.height - crop_bottom
+
+        if left < right and top < bottom:
+            crop_box = (left, top, right, bottom)
+            preview_cropped = image.crop(crop_box)
+            st.image(preview_cropped, caption="🔍 Cropped Preview", use_container_width=True)
+        else:
+            st.error("❌ Crop values are too large or invalid.")
+
+    output_format = st.selectbox("Choose output format", output_formats, index=output_formats.index(default_format))
+
+    # Unified Convert & Download button
+    if (resize_mode == "Crop" and crop_box) or (resize_mode == "Scale" and scale_valid):
+        processed_image = image
+
+        if resize_mode == "Crop" and crop_box:
+            processed_image = image.crop(crop_box)
+        elif resize_mode == "Scale":
+            processed_image = image.resize((int(new_width), int(new_height)))
+
+        buf = io.BytesIO()
+        if output_format == "JPEG":
+            processed_image = processed_image.convert("RGB")
+        processed_image.save(buf, format=output_format)
+        buf.seek(0)
+
+        st.download_button(
+            label=f"📥 Convert and Download as {output_format}",
+            data=buf,
+            file_name=f"converted_image.{output_format.lower()}",
+            mime=f"image/{output_format.lower()}"
+        )
