@@ -12,7 +12,6 @@ default_format = "JPEG"
 
 if uploaded_file:
     image = Image.open(uploaded_file)
-    st.image(image, caption="Original Image", use_container_width=True)
 
     st.markdown("### Resize Mode")
     resize_mode = st.radio("Choose resize mode", ["Scale", "Crop"])
@@ -58,8 +57,6 @@ if uploaded_file:
 
         if left < right and top < bottom:
             crop_box = (left, top, right, bottom)
-            preview_cropped = image.crop(crop_box)
-            st.image(preview_cropped, caption="🔍 Cropped Preview", use_container_width=True)
         else:
             st.error("❌ Crop values are too large or invalid.")
 
@@ -88,38 +85,14 @@ if uploaded_file:
             file_ext = output_format.lower()
 
         buf.seek(0)
+        file_size_kb = round(len(buf.getvalue()) / 1024, 2)
 
-        # For clipboard copy
-        img_copy_buf = io.BytesIO()
-        processed_image.save(img_copy_buf, format="PNG")
-        img_copy_buf.seek(0)
-        img_base64 = base64.b64encode(img_copy_buf.read()).decode("utf-8")
+        # Show only the final result
+        st.image(processed_image, caption=f"Converted Image ({file_size_kb} KB)", use_container_width=True)
 
-        col1, col2 = st.columns([2, 1])
-
-        with col1:
-            st.download_button(
-                label=f"📥 Convert and Download as {output_format}",
-                data=buf,
-                file_name=f"converted_image.{file_ext}",
-                mime=mime_type
-            )
-
-        with col2:
-            st.markdown(
-                f"""
-                <button onclick="copyImage()" style="margin-top: 22px;">📋 Copy to Clipboard</button>
-                <script>
-                async function copyImage() {{
-                    const base64 = "{img_base64}";
-                    const blob = await (await fetch("data:image/png;base64," + base64)).blob();
-                    await navigator.clipboard.write([
-                        new ClipboardItem({{"image/png": blob}})
-                    ]);
-                    alert("✅ Image copied to clipboard");
-                }}
-                </script>
-                """,
-                unsafe_allow_html=True
-            )
-
+        st.download_button(
+            label=f"📥 Download as {output_format}",
+            data=buf,
+            file_name=f"converted_image.{file_ext}",
+            mime=mime_type
+        )
