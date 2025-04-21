@@ -2,13 +2,10 @@ import streamlit as st
 from PIL import Image
 import io
 
-# Title
 st.title("🖼️ Image Converter & Resizer")
 
-# Upload image
 uploaded_file = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg", "bmp", "gif", "webp"])
 
-# Supported formats
 output_formats = ["JPEG", "PNG", "WEBP", "BMP"]
 default_format = "JPEG"
 
@@ -21,6 +18,7 @@ if uploaded_file:
 
     new_width, new_height = image.width, image.height
     scale_valid = True
+    crop_box = None
 
     if resize_mode == "Scale":
         scale_input = st.text_input("Enter scale (e.g. `50%`, `1024x768`)", value="100%")
@@ -44,19 +42,40 @@ if uploaded_file:
         else:
             scale_valid = False
             st.error("❌ Use format like `1024x768` or `75%`")
+
     else:
-        new_width = st.number_input("Width", value=image.width)
-        new_height = st.number_input("Height", value=image.height)
+        st.markdown("#### Crop X pixels from each side")
+        crop_left = st.number_input("Left", value=0, min_value=0, max_value=image.width - 1)
+        crop_top = st.number_input("Top", value=0, min_value=0, max_value=image.height - 1)
+        crop_right = st.number_input("Right", value=0, min_value=0, max_value=image.width - crop_left - 1)
+        crop_bottom = st.number_input("Bottom", value=0, min_value=0, max_value=image.height - crop_top - 1)
+
+        left = crop_left
+        top = crop_top
+        right = image.width - crop_right
+        bottom = image.height - crop_bottom
+
+        if left < right and top < bottom:
+            crop_box = (left, top, right, bottom)
+            preview_cropped = image.crop(crop_box)
+            st.image(preview_cropped, caption="🔍 Cropped Preview", use_container_width=True)
+        else:
+            st.error("❌ Crop values are too large or invalid.")
 
     output_format = st.selectbox("Choose output format", output_formats, index=output_formats.index(default_format))
 
-    if st.button("Convert & Download") and (resize_mode == "Crop" or scale_valid):
-        resized_image = image.resize((int(new_width), int(new_height)))
+    if st.button("Convert & Download") and (resize_mode == "Crop" and crop_box or resize_mode == "Scale" and scale_valid):
+        processed_image = image
+
+        if resize_mode == "Crop" and crop_box:
+            processed_image = image.crop(crop_box)
+        elif resize_mode == "Scale":
+            processed_image = image.resize((int(new_width), int(new_height)))
 
         buf = io.BytesIO()
         if output_format == "JPEG":
-            resized_image = resized_image.convert("RGB")
-        resized_image.save(buf, format=output_format)
+            processed_image = processed_image.convert("RGB")
+        processed_image.save(buf, format=output_format)
         buf.seek(0)
 
         st.download_button(
