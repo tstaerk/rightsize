@@ -1,6 +1,7 @@
 import streamlit as st
 from PIL import Image
 import io
+import base64
 
 st.title("🖼️ Image Converter & Resizer")
 
@@ -64,7 +65,6 @@ if uploaded_file:
 
     output_format = st.selectbox("Choose output format", output_formats, index=output_formats.index(default_format))
 
-    # Unified Convert & Download button
     if (resize_mode == "Crop" and crop_box) or (resize_mode == "Scale" and scale_valid):
         processed_image = image
 
@@ -73,15 +73,57 @@ if uploaded_file:
         elif resize_mode == "Scale":
             processed_image = image.resize((int(new_width), int(new_height)))
 
+        # Convert image to buffer
         buf = io.BytesIO()
         if output_format == "JPEG":
             processed_image = processed_image.convert("RGB")
         processed_image.save(buf, format=output_format)
         buf.seek(0)
 
-        st.download_button(
-            label=f"📥 Convert and Download as {output_format}",
-            data=buf,
-            file_name=f"converted_image.{output_format.lower()}",
-            mime=f"image/{output_format.lower()}"
-        )
+        # Create PDF buffer
+        pdf_buf = io.BytesIO()
+        processed_image.save(pdf_buf, format="PDF")
+        pdf_buf.seek(0)
+
+        # Base64 for clipboard
+        img_copy_buf = io.BytesIO()
+        processed_image.save(img_copy_buf, format="PNG")
+        img_copy_buf.seek(0)
+        img_base64 = base64.b64encode(img_copy_buf.read()).decode("utf-8")
+
+        # Layout: 3 buttons
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.download_button(
+                label=f"📥 Convert and Download as {output_format}",
+                data=buf,
+                file_name=f"converted_image.{output_format.lower()}",
+                mime=f"image/{output_format.lower()}"
+            )
+
+        with col2:
+            st.download_button(
+                label="📄 Export to PDF",
+                data=pdf_buf,
+                file_name="converted_image.pdf",
+                mime="application/pdf"
+            )
+
+        with col3:
+            st.markdown(
+                f"""
+                <button onclick="copyImage()" style="margin-top: 22px;">📋 Copy to Clipboard</button>
+                <script>
+                async function copyImage() {{
+                    const base64 = "{img_base64}";
+                    const blob = await (await fetch("data:image/png;base64," + base64)).blob();
+                    await navigator.clipboard.write([
+                        new ClipboardItem({{"image/png": blob}})
+                    ]);
+                    alert("✅ Image copied to clipboard");
+                }}
+                </script>
+                """,
+                unsafe_allow_html=True
+            )
