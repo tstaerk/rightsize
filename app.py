@@ -45,25 +45,25 @@ if uploaded_file:
         with crop_top_col:
             st.markdown("Top")
         with crop_top_input:
-            crop_top = st.number_input(" ", min_value=0, value=0, label_visibility="collapsed")
+            crop_top = st.number_input(" ", min_value=0, value=0, label_visibility="collapsed", key="crop_top")
 
         crop_left_col, crop_left_input = st.columns([1, 2])
         with crop_left_col:
             st.markdown("Left")
         with crop_left_input:
-            crop_left = st.number_input(" ", min_value=0, value=0, label_visibility="collapsed")
+            crop_left = st.number_input(" ", min_value=0, value=0, label_visibility="collapsed", key="crop_left")
 
         crop_right_col, crop_right_input = st.columns([1, 2])
         with crop_right_col:
             st.markdown("Right")
         with crop_right_input:
-            crop_right = st.number_input(" ", min_value=0, value=0, label_visibility="collapsed")
+            crop_right = st.number_input(" ", min_value=0, value=0, label_visibility="collapsed", key="crop_right")
 
         crop_bottom_col, crop_bottom_input = st.columns([1, 2])
         with crop_bottom_col:
             st.markdown("Bottom")
         with crop_bottom_input:
-            crop_bottom = st.number_input(" ", min_value=0, value=0, label_visibility="collapsed")
+            crop_bottom = st.number_input(" ", min_value=0, value=0, label_visibility="collapsed", key="crop_bottom")
 
     # Crop calculation
     crop_box = None
