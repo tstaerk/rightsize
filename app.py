@@ -15,7 +15,7 @@ default_format = "JPEG"
 if uploaded_file:
     # Load the image
     image = Image.open(uploaded_file)
-    st.image(image, caption="Original Image", use_column_width=True)
+    st.image(image, caption="Original Image", use_container_width=True)
 
     st.markdown("### Resize Options")
     width = st.number_input("Width", value=image.width)
