@@ -7,7 +7,7 @@ st.title("🖼️ Image Converter & Resizer")
 
 uploaded_file = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg", "bmp", "gif", "webp"])
 
-output_formats = ["JPEG", "PNG", "WEBP", "BMP"]
+output_formats = ["JPEG", "PNG", "WEBP", "BMP", "PDF"]
 default_format = "JPEG"
 
 if uploaded_file:
@@ -73,44 +73,39 @@ if uploaded_file:
         elif resize_mode == "Scale":
             processed_image = image.resize((int(new_width), int(new_height)))
 
-        # Convert image to buffer
         buf = io.BytesIO()
-        if output_format == "JPEG":
-            processed_image = processed_image.convert("RGB")
-        processed_image.save(buf, format=output_format)
+        if output_format == "PDF":
+            if processed_image.mode in ("RGBA", "P"):
+                processed_image = processed_image.convert("RGB")
+            processed_image.save(buf, format="PDF")
+            mime_type = "application/pdf"
+            file_ext = "pdf"
+        else:
+            if output_format == "JPEG":
+                processed_image = processed_image.convert("RGB")
+            processed_image.save(buf, format=output_format)
+            mime_type = f"image/{output_format.lower()}"
+            file_ext = output_format.lower()
+
         buf.seek(0)
 
-        # Create PDF buffer
-        pdf_buf = io.BytesIO()
-        processed_image.save(pdf_buf, format="PDF")
-        pdf_buf.seek(0)
-
-        # Base64 for clipboard
+        # For clipboard copy
         img_copy_buf = io.BytesIO()
         processed_image.save(img_copy_buf, format="PNG")
         img_copy_buf.seek(0)
         img_base64 = base64.b64encode(img_copy_buf.read()).decode("utf-8")
 
-        # Layout: 3 buttons
-        col1, col2, col3 = st.columns(3)
+        col1, col2 = st.columns([2, 1])
 
         with col1:
             st.download_button(
                 label=f"📥 Convert and Download as {output_format}",
                 data=buf,
-                file_name=f"converted_image.{output_format.lower()}",
-                mime=f"image/{output_format.lower()}"
+                file_name=f"converted_image.{file_ext}",
+                mime=mime_type
             )
 
         with col2:
-            st.download_button(
-                label="📄 Export to PDF",
-                data=pdf_buf,
-                file_name="converted_image.pdf",
-                mime="application/pdf"
-            )
-
-        with col3:
             st.markdown(
                 f"""
                 <button onclick="copyImage()" style="margin-top: 22px;">📋 Copy to Clipboard</button>
@@ -127,3 +122,4 @@ if uploaded_file:
                 """,
                 unsafe_allow_html=True
             )
+
