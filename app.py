@@ -11,7 +11,18 @@ output_formats = ["JPEG", "PNG", "WEBP", "BMP", "PDF"]
 default_format = "JPEG"
 
 if uploaded_file:
+    # Load original image
     image = Image.open(uploaded_file)
+    original_width, original_height = image.width, image.height
+    uploaded_file.seek(0)
+    original_size_kb = round(len(uploaded_file.read()) / 1024, 2)
+
+    st.markdown(f"**Original Image:** {original_width} × {original_height} px — {original_size_kb} KB")
+
+    # Rotation
+    rotate = st.checkbox("↻ Rotate 90° clockwise")
+    if rotate:
+        image = image.rotate(-90, expand=True)
 
     st.markdown("### Resize Mode")
     resize_mode = st.radio("Choose resize mode", ["Scale", "Crop"])
@@ -86,9 +97,11 @@ if uploaded_file:
 
         buf.seek(0)
         file_size_kb = round(len(buf.getvalue()) / 1024, 2)
+        result_width, result_height = processed_image.width, processed_image.height
 
-        # Show only the final result
-        st.image(processed_image, caption=f"Converted Image ({file_size_kb} KB)", use_container_width=True)
+        # Display final image with info
+        st.markdown(f"**Converted Image:** {result_width} × {result_height} px — {file_size_kb} KB")
+        st.image(processed_image, use_container_width=True)
 
         st.download_button(
             label=f"📥 Download as {output_format}",
