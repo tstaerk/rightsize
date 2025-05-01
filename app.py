@@ -65,7 +65,6 @@ if uploaded_file:
         with crop_bottom_input:
             crop_bottom = st.number_input(" ", min_value=0, value=0, label_visibility="collapsed", key="crop_bottom")
 
-    # Crop calculation
     crop_box = None
     left = crop_left
     top = crop_top
@@ -76,7 +75,6 @@ if uploaded_file:
     else:
         st.error("❌ Crop values are too large or invalid.")
 
-    # Scale calculation
     scale_valid = True
     new_width, new_height = image.width, image.height
 
@@ -101,10 +99,6 @@ if uploaded_file:
             scale_valid = False
             st.error("❌ Use format like `1024x768` or `75%`")
 
-    # Output format selection
-    output_format = st.selectbox("Choose output format", output_formats, index=output_formats.index(default_format))
-
-    # Apply crop and scale
     if scale_valid and crop_box:
         processed_image = image.crop(crop_box)
         processed_image = processed_image.resize((new_width, new_height))
@@ -115,8 +109,12 @@ if uploaded_file:
     else:
         processed_image = image
 
-    # Save to buffer
     buf = io.BytesIO()
+    output_col1, output_col2 = st.columns([2, 1])
+
+    with output_col2:
+        output_format = st.selectbox("Format", output_formats, index=output_formats.index(default_format), label_visibility="collapsed")
+
     if output_format == "PDF":
         if processed_image.mode in ("RGBA", "P"):
             processed_image = processed_image.convert("RGB")
@@ -134,14 +132,13 @@ if uploaded_file:
     file_size_kb = round(len(buf.getvalue()) / 1024, 2)
     result_width, result_height = processed_image.width, processed_image.height
 
-    # Final image + info
     st.markdown(f"**Converted Image:** {result_width} × {result_height} px — {file_size_kb} KB")
     st.image(processed_image, use_container_width=True)
 
-    # Download button
-    st.download_button(
-        label=f"📥 Download as {output_format}",
-        data=buf,
-        file_name=f"converted_image.{file_ext}",
-        mime=mime_type
-    )
+    with output_col1:
+        st.download_button(
+            label=f"📥 Download as {output_format}",
+            data=buf,
+            file_name=f"converted_image.{file_ext}",
+            mime=mime_type
+        )
